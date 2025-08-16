@@ -41,6 +41,10 @@
   - [Proof Tapes for Reproducibility](#proof-tapes-for-reproducibility)
   - [Integer Discretization](#integer-discretization)
   - [Gecode Integration](#gecode-integration)
+  - [Performance Analysis and Optimization](#performance-analysis-and-optimization)
+- [Recent Model Analysis and Debugging](#recent-model-analysis-and-debugging)
+- [Model Documentation](#model-documentation)
+- [Standard Operating Procedures (SOPs)](#standard-operating-procedures-sops)
 - [Contributing](#contributing)
 - [License](#license)
 - [Acknowledgements](#acknowledgements)
@@ -81,17 +85,17 @@ To get this specialized `libminizinc` environment up and running:
 
 ### Running the Embedding Model
 
-The core MiniZinc embedding model can be executed using the `run_embedding_model_v6.sh` script. This script utilizes version vectors to specify the exact composition of model and data modules, and automatically generates a "proof tape" for each run, ensuring precise, traceable, and composable experimentation.
+The core MiniZinc embedding model can be executed using the `run_embedding_model_v7.sh` script. This script now leverages a Rust-based data generator for dynamic parameter creation and is part of a more robust Rust-based test runner framework. It utilizes version vectors to specify the exact composition of model and data modules, and automatically generates a "proof tape" for each run, ensuring precise, traceable, and composable experimentation.
 
 ```bash
-./scripts/run_embedding_model_v6.sh <main_model_version> <core_params_version> <kappa_params_version> <other_params_version> <relations_version> <vector_params_version>
+./scripts/run_embedding_model_v7.sh <main_model_version> <core_params_version> <kappa_params_version> <other_params_version> <relations_version> <vector_params_version>
 ```
 
 **Example:**
 ```bash
-./scripts/run_embedding_model_v6.sh v6 v1 v1 v1 v1 v1
+./scripts/run_embedding_model_v7.sh v6 v1 v1 v1 v1 v1
 ```
-For more details, refer to `docs/sops/run_model_sop_v3.md`.
+For more details on running tests and understanding the new framework, refer to [MiniZinc Model Performance Analysis and Debugging Report](docs/performance_analysis_report.md).
 
 ### New to the Project? Start Here!
 
@@ -103,36 +107,13 @@ If you're new to this project, we highly recommend starting with our "N00b's Gui
 
 This section documents recent findings and debugging efforts related to the MiniZinc embedding models.
 
-### Analysis of v6 Model Unsatisfiability
+*   [MiniZinc Model Performance Analysis and Debugging Report](docs/performance_analysis_report.md)
 
-When running the `v6` main model with `v1` data parameters (`./scripts/run_embedding_model_v6.sh v6 v1 v1 v1 v1 v1`), the model consistently resulted in `=====UNSATISFIABLE=====`. This indicates that, with the given constraints and parameters, no solution could be found.
+## Model Documentation
 
-The diagnostic process involved:
-*   **Initial Debugging of Script Execution:** Enhancing `run_embedding_model_v6.sh` to provide immediate `head`/`tail` log output and display the full MiniZinc command for easier debugging.
-*   **Resolving Include Path Issues:** Identifying and correcting an `include` path error in `embedding_sphere_final_v5.mzn` (which was temporarily modified during debugging) where `embedding_params_composed_v2.mzn` was being sought but the correct file was `embedding_params_core_composed_v3.mzn`. This was resolved by directly updating the `include` statement in `embedding_sphere_final_v5.mzn`.
-*   **Addressing Undefined Identifiers:** A chain of "undefined identifier" errors (`kappa_global`, `epsilon`, `num_bindings`, `alpha_coeff`) were encountered. These were resolved by ensuring that `embedding_sphere_final_v5.mzn` (and by extension, `embedding_sphere_final_v6.mzn` as they share similar structures) explicitly included the necessary parameter composition files (`embedding_params_kappa_composed.mzn`, `embedding_params_other_composed.mzn`, `embedding_params_relations_v3.mzn`, `embedding_params_vector_composed_v3.mzn`) before their corresponding `.dzn` data files were processed.
-*   **Pinpointing the Unsatisfiable Constraint:** The primary cause of the `=====UNSATISFIABLE===== `result for the `v6` model was identified as the unit norm constraint in `embedding_constraints.mzn`:
-    ```minizinc
-    constraint forall(i in 1..n) (
-      sum(k in 1..d) (p_actual_values[i,k] * p_actual_values[i,k]) = PARTITION_SCALE * PARTITION_SCALE
-    );
-    ```
-    This constraint, requiring the sum of squares of `p_actual_values` to exactly equal `PARTITION_SCALE * PARTITION_SCALE` (which is `1,000,000` with `PARTITION_SCALE = 1000`), proved too restrictive for the discrete integer values `p_actual_values` could take.
-*   **Achieving Satisfiability:** By temporarily commenting out this specific constraint in `embedding_constraints.mzn`, the `v6` model became satisfiable, demonstrating that this constraint was indeed the bottleneck.
+This section provides detailed documentation and analysis of the MiniZinc models within this project.
 
-### Next Steps for Constraint Resolution
-
-To achieve a satisfiable solution while maintaining the intent of the unit norm constraint, several approaches can be explored:
-*   **Constraint Relaxation:** Modify the constraint to allow for a tolerance (e.g., `sum(...) <= PARTITION_SCALE * PARTITION_SCALE + tolerance`) or change the equality to an inequality (`<=` or `>=`).
-*   **Parameter Adjustment:** Re-evaluate the `PARTITION_SCALE` value or the domain of `p_actual_values` to find a combination that makes the constraint achievable with discrete values.
-*   **Alternative Modeling:** Explore alternative ways to model the unit norm concept within the discrete integer domain, potentially using different mathematical formulations or approximations.
-
-### Debugging Script Enhancements
-
-The `run_embedding_model_v6.sh` script has been enhanced to aid in debugging. It now:
-*   Prints the current working directory.
-*   Displays the full MiniZinc command being executed.
-*   Shows the first 20 lines (`head -n 20`) of both `stdout.log` and `stderr.log` immediately after the MiniZinc run, providing quick access to diagnostic information.
+*   [MiniZinc Models Overview](docs/minizinc_models_overview.md)
 
 ## Tutorials
 
@@ -162,6 +143,26 @@ A key technical aspect of this project involves discretizing floating-point valu
 
 Specific procedures are in place for building, configuring, and integrating Gecode as a solver. Troubleshooting steps for common build issues and solver discovery are documented. See `docs/sops/project_workflow.md`.
 
+### Performance Analysis and Optimization
+
+To systematically identify and address performance bottlenecks in MiniZinc models, particularly the `v6` embedding model, we follow a structured deconstruction and reconstruction process. This involves incremental reintroduction of complexity and rigorous performance measurement at each step. For detailed procedures and recent findings, refer to [MiniZinc Model Performance Analysis and Debugging Report](docs/performance_analysis_report.md).
+
+## Standard Operating Procedures (SOPs)
+
+This project adheres to a strict set of Standard Operating Procedures (SOPs) to ensure consistency, quality, and reproducibility. Please familiarize yourself with these documents:
+
+*   [Monotonic Epic Idea SOP](docs/sops/monotonic_epic_idea_sop.md)
+*   [No Direct Edits SOP](docs/sops/no_direct_edits_sop.md)
+*   [Project Workflow SOP](docs/sops/project_workflow.md)
+*   [Run Model SOP v3](docs/sops/run_model_sop_v3.md)
+*   [MiniZinc v6 Model Reconstruction SOP](docs/sops/v6_reconstruction_sop.md)
+*   [Backpack Filling SOP](docs/sops/backpack_filling_sop.md)
+*   [Eigenvector of Athena SOP](docs/sops/eigenvector_of_athena_sop.md)
+*   [Muse SOP](docs/sops/muse_sop.md)
+*   [QA DZN Generation Verification SOP](docs/sops/qa_dzn_generation_verification.md)
+*   [Tutorial Livestream Mode SOP](docs/sops/tutorial_livestream_mode.md)
+*   [MiniZinc Model Performance Analysis and Debugging Report](docs/performance_analysis_report.md)
+
 ## Contributing
 
 Contributions that align with the project's vision and adhere to its unique development philosophy are welcome. Please familiarize yourself with the SOPs in the `docs/sops/` directory before contributing.
@@ -185,3 +186,13 @@ This research was partially funded by the Australian Government through the Aust
 🏛 **Monash Optimisation Group**
 
 - Website: [https://www.monash.edu/it/dsai/optimisation](https://www.monash.edu/it/dsai/optimisation)
+
+## The "Zinc Oxide" Metaphor in MiniZinc FFI
+
+The term "Zinc Oxide" is used metaphorically to describe the Rust FFI (Foreign Function Interface) for MiniZinc. In this analogy:
+
+*   **"Zinc"** represents MiniZinc, the powerful constraint programming language.
+*   **"Rust"** refers to the Rust programming language, known for its safety and performance.
+*   **"Oxide"** draws a parallel to the chemical compound zinc oxide, where zinc (the core element) is combined with oxygen (representing Rust's interaction).
+
+Thus, "Zinc Oxide" signifies the critical process of **value extraction and solution retrieval** from MiniZinc models into Rust applications, enabling Rust to leverage MiniZinc's capabilities. It highlights the integration where Rust "oxidizes" MiniZinc, making its power accessible and usable within the Rust ecosystem.
