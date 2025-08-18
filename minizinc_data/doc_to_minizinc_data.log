@@ -1,33 +1,4 @@
-Generating data with args: Args { chunk_size: 100 } and 24 relations
-Generated /data/data/com.termux/files/home/storage/github/libminizinc/minizinc_data/word_embeddings_chunk_0.dzn
-Running MiniZinc for: /data/data/com.termux/files/home/storage/github/libminizinc/minizinc_data/word_embeddings_chunk_0.dzn
-MiniZinc failed for /data/data/com.termux/files/home/storage/github/libminizinc/minizinc_data/word_embeddings_chunk_0.dzn
-Stdout:
+Generating data with args: Args { chunk_size: 1000 } and 0 relations
 
-Stderr:
-DEBUG: MiniZinc::Env constructor called.
-DEBUG: MiniZinc::Env constructor called.
-DEBUG: MiniZinc::Env constructor called.
-Entering parse function...
-  Arguments:
-    filenames: ["/data/data/com.termux/files/home/storage/github/libminizinc/word_embedding_inference.mzn", ]
-    datafiles: ["/data/data/com.termux/files/home/storage/github/libminizinc/minizinc_data/word_embeddings_chunk_0.dzn", ]
-    modelString: ""
-    modelStringName: "stdin"
-    ip (includePaths): ["/data/data/com.termux/files/home/storage/github/libminizinc/share/minizinc/std", ]
-    globalInc: ["writes.mzn", "write.mzn", "value_precede_chain.mzn", "tree.mzn", "table.mzn", "symmetric_all_different.mzn", "subcircuit.mzn", "strict_lex2.mzn", "subgraph.mzn", "strictly_increasing.mzn", "strictly_decreasing.mzn", "steiner.mzn", "all_equal.mzn", "sliding_sum.mzn", "roots_fn.mzn", "neural_net.mzn", "regular_nfa.mzn", "sum_set.mzn", "range.mzn", "sort_fn.mzn", "var_perm_sym.mzn", "nvalue.mzn", "network_flow.mzn", "maximum.mzn", "link_set_to_booleans.mzn", "lex2_strict.mzn", "span.mzn", "arg_sort.mzn", "lex_chain_greater.mzn", "lex_chain_greatereq_orbitope.mzn", "seq_precede_chain.mzn", "member.mzn", "lex_chain_lesseq_orbitope.mzn", "global_cardinality_closed_fn.mzn", "lex_chain_greatereq.mzn", "alternative.mzn", "disjoint.mzn", "lex_chain_lesseq.mzn", "lex_less.mzn", "lex_lesseq.mzn", "knapsack.mzn", "weighted_spanning_tree.mzn", "inverse_set.mzn", "at_least.mzn", "inverse_fn.mzn", "increasing.mzn", "cost_regular.mzn", "global_cardinality_low_up_closed.mzn", "mdd_nondet.mzn", "element.mzn", "minimum.mzn", "global_cardinality.mzn", "cumulative_opt.mzn", "disjunctive_opt.mzn", "disjunctive.mzn", "lex_chain_less.mzn", "exactly.mzn", "inverse_in_range.mzn", "global_cardinality_fn.mzn", "connected.mzn", "all_different.mzn", "decreasing.mzn", "disjunctive_strict_opt.mzn", "partition_set.mzn", "global_cardinality_closed.mzn", "diffn_k.mzn", "diffn_nonstrict.mzn", "piecewise_linear.mzn", "regular_regexp.mzn", "lex_greater.mzn", "diffn.mzn", "cumulatives.mzn", "lex_greatereq.mzn", "cumulative.mzn", "diffn_nonstrict_k.mzn", "count.mzn", "range_fn.mzn", "bounded_path.mzn", "all_disjoint.mzn", "circuit_opt.mzn", "reachable.mzn", "nvalue_fn.mzn", "inverse.mzn", "dag.mzn", "geost.mzn", "arg_max.mzn", "circuit.mzn", "bin_packing_load_fn.mzn", "mdd.mzn", "all_different_except_0.mzn", "distribute.mzn", "bin_packing_load.mzn", "lex2.mzn", "at_most.mzn", "sort.mzn", "value_precede.mzn", "among_fn.mzn", "cost_mdd.mzn", "sum_pred.mzn", "arg_val.mzn", "disjunctive_strict.mzn", "piecewise_linear_non_continuous.mzn", "bin_packing.mzn", "distribute_fn.mzn", "regular.mzn", "global_cardinality_low_up.mzn", "arg_min.mzn", "bin_packing_capa.mzn", "writes_seq.mzn", "var_sqr_sym.mzn", "count_fn.mzn", "all_different_except.mzn", "roots.mzn", "int_set_channel.mzn", "among.mzn", "at_most1.mzn", ]
-    isFlatZinc: false
-    ignoreStdlib: false
-    parseDocComments: false
-    verbose: false
-Exiting parse function.
-Multiple type errors:
-Error: type error:   symbol error: variable `num_relations' must be defined (did you forget to specify a data file?)
-/data/data/com.termux/files/home/storage/github/libminizinc/minizinc_data/data_declarations.mzn:6.1-18
-
-Error: type error:   symbol error: variable `relation_pairs' must be defined (did you forget to specify a data file?)
-/data/data/com.termux/files/home/storage/github/libminizinc/minizinc_data/data_declarations.mzn:7.1-55
-
-Error: type error:   symbol error: variable `desired_distances' must be defined (did you forget to specify a data file?)
-/data/data/com.termux/files/home/storage/github/libminizinc/minizinc_data/data_declarations.mzn:8.1-51
-
+--- Extracted Words and Embeddings ---
+--------------------------------------
