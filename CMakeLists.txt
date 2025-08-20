@@ -65,6 +65,7 @@ endif()
 #  -- Compiler configuration
 
 include(cmake/support/compiler_setup.cmake)
+include(cmake/support/coverage_setup.cmake)
 
 configure_file(
   ${PROJECT_SOURCE_DIR}/include/minizinc/config.hh.in
@@ -86,10 +87,14 @@ include_directories(${PROJECT_SOURCE_DIR}/vendor/gecode/build)
 
 # Libraries
 include(cmake/targets/libmzn.cmake)
+include(cmake/targets/minizinc_c_wrapper.cmake)
 
 # Executables
 include(cmake/targets/minizinc.cmake)
 include(cmake/targets/mzn2doc.cmake)
+
+# add_executable(test_ffi_parser tools/minizinc_c_wrapper_refactored/test_ffi_parser.cpp)
+# target_link_libraries(test_ffi_parser PRIVATE minizinc_c_wrapper mzn)
 
 # -------------------------------------------------------------------------------------------------------------------
 #  -- Platform Specific configuration

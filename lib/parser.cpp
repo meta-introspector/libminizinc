@@ -106,6 +106,36 @@ void parse(Env& env, Model*& model, const vector<string>& filenames,
            const std::string& modelStringName, const vector<string>& ip,
            std::unordered_set<std::string> globalInc, bool isFlatZinc, bool ignoreStdlib,
            bool parseDocComments, bool verbose, ostream& err) {
+  // Instrumentation: Entry point
+  std::cerr << "Entering parse function..." << std::endl;
+  std::cerr << "  Arguments:" << std::endl;
+  std::cerr << "    filenames: [";
+  for (const auto& s : filenames) {
+    std::cerr << "\"" << s << "\", ";
+  }
+  std::cerr << "]" << std::endl;
+  std::cerr << "    datafiles: [";
+  for (const auto& s : datafiles) {
+    std::cerr << "\"" << s << "\", ";
+  }
+  std::cerr << "]" << std::endl;
+  std::cerr << "    modelString: \"" << modelString << "\"" << std::endl;
+  std::cerr << "    modelStringName: \"" << modelStringName << "\"" << std::endl;
+  std::cerr << "    ip (includePaths): [";
+  for (const auto& s : ip) {
+    std::cerr << "\"" << s << "\", ";
+  }
+  std::cerr << "]" << std::endl;
+  std::cerr << "    globalInc: [";
+  for (const auto& s : globalInc) {
+    std::cerr << "\"" << s << "\", ";
+  }
+  std::cerr << "]" << std::endl;
+  std::cerr << "    isFlatZinc: " << (isFlatZinc ? "true" : "false") << std::endl;
+  std::cerr << "    ignoreStdlib: " << (ignoreStdlib ? "true" : "false") << std::endl;
+  std::cerr << "    parseDocComments: " << (parseDocComments ? "true" : "false") << std::endl;
+  std::cerr << "    verbose: " << (verbose ? "true" : "false") << std::endl;
+  // Note: 'err' is an ostream, not directly printable in this manner.
   vector<string> includePaths;
   for (const auto& i : ip) {
     includePaths.push_back(i);
@@ -185,6 +215,7 @@ void parse(Env& env, Model*& model, const vector<string>& filenames,
   //   include_file("flatzincbuiltins.mzn", true);
   // }
 
+  //  std::cerr << "DEBUG: [parser.cpp] Entering file processing loop." << std::endl;
   while (!files.empty()) {
     GCLock lock;
     ParseWorkItem& np = files.back();
@@ -257,8 +288,9 @@ void parse(Env& env, Model*& model, const vector<string>& filenames,
         }
         throw Error("Cannot open file '" + f + "'.");
       }
+      //      std::cerr << "Processing file: " << f << std::endl;
       if (verbose) {
-        std::cerr << "processing file '" << fullname << "'" << endl;
+        //        std::cerr << "processing file '" << fullname << "'" << endl;
       }
       s = get_file_contents(file);
 
@@ -273,9 +305,11 @@ void parse(Env& env, Model*& model, const vector<string>& filenames,
     }
     ParserState pp(fullname, s, err, includePaths, files, seenModels, m, false, isFzn, isSTDLib,
                    parseDocComments);
+       //    std::cerr << "DEBUG: [parser.cpp] Calling mzn_yyparse." << std::endl;
     mzn_yylex_init(&pp.yyscanner);
     mzn_yyset_extra(&pp, pp.yyscanner);
     mzn_yyparse(&pp);
+    //std::cerr << "DEBUG: [parser.cpp] mzn_yyparse returned." << std::endl;
     if (pp.yyscanner != nullptr) {
       mzn_yylex_destroy(pp.yyscanner);
     }
@@ -320,6 +354,8 @@ void parse(Env& env, Model*& model, const vector<string>& filenames,
       }
     }
   }
+  // Instrumentation: Exit point
+  std::cerr << "Exiting parse function." << std::endl;
 }
 
 Model* parse(Env& env, const vector<string>& filenames, const vector<string>& datafiles,
@@ -339,7 +375,9 @@ Model* parse(Env& env, const vector<string>& filenames, const vector<string>& da
   try {
     parse(env, model, filenames, datafiles, textModel, textModelName, includePaths,
           std::move(globalInc), isFlatZinc, ignoreStdlib, parseDocComments, verbose, err);
-  } catch (Exception& /*e*/) {
+  } catch (Exception& e) {
+    // Instrumentation: Log caught exception
+    std::cerr << "Caught parsing exception: " << e.what() << std::endl;
     delete model;
     throw;
   }

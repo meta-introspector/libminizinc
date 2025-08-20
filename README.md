@@ -34,13 +34,8 @@
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Running the Embedding Model](#running-the-embedding-model)
-- [Tutorials](#tutorials)
-  - [Episode 1: Introduction to Hyperspace and Lambda Embedding](#episode-1-introduction-to-hyperspace-and-lambda-embedding)
+- [Documentation](#documentation)
 - [Development Guidelines](#development-guidelines)
-  - [No Direct Edits](#no-direct-edits)
-  - [Proof Tapes for Reproducibility](#proof-tapes-for-reproducibility)
-  - [Integer Discretization](#integer-discretization)
-  - [Gecode Integration](#gecode-integration)
 - [Contributing](#contributing)
 - [License](#license)
 - [Acknowledgements](#acknowledgements)
@@ -77,70 +72,31 @@ To get this specialized `libminizinc` environment up and running:
 *   MiniZinc (refer to [MiniZinc website](http://www.minizinc.org/software.html) for installation).
 *   CMake (>=3.4)
 *   A recent C++ compiler (Clang, GCC, MSVC tested).
-*   (Optional) Gecode: For specific solver integrations. Refer to `docs/sops/project_workflow.md` for build and configuration details.
+*   (Optional) Gecode: For specific solver integrations. Refer to `docs/technical/project_workflow.md` for build and configuration details.
 
 ### Running the Embedding Model
 
-The core MiniZinc embedding model can be executed using the `run_embedding_model_v6.sh` script. This script utilizes version vectors to specify the exact composition of model and data modules, and automatically generates a "proof tape" for each run, ensuring precise, traceable, and composable experimentation.
+The core MiniZinc embedding model can be executed using the `run_embedding_model_v7.sh` script. This script now leverages a Rust-based data generator for dynamic parameter creation and is part of a more robust Rust-based test runner framework. It utilizes version vectors to specify the exact composition of model and data modules, and automatically generates a "proof tape" for each run, ensuring precise, traceable, and composable experimentation.
 
 ```bash
-./scripts/run_embedding_model_v6.sh <main_model_version> <core_params_version> <kappa_params_version> <other_params_version> <relations_version> <vector_params_version>
+./scripts/run_embedding_model_v7.sh <main_model_version> <core_params_version> <kappa_params_version> <other_params_version> <relations_version> <vector_params_version>
 ```
 
 **Example:**
 ```bash
-./scripts/run_embedding_model_v6.sh v6 v1 v1 v1 v1 v1
+./scripts/run_embedding_model_v7.sh v6 v1 v1 v1 v1 v1
 ```
-For more details, refer to `docs/sops/run_model_sop_v3.md`.
+For more details on running tests and understanding the new framework, refer to `docs/technical/performance_analysis_report.md`.
 
-### New to the Project? Start Here!
+## Documentation
 
-If you're new to this project, we highly recommend starting with our "N00b's Guide" for a simplified introduction to running the models and understanding the basics:
+This project's documentation is organized into the following categories:
 
-*   [Getting Started: A N00b's Guide to libminizinc](docs/n00b_guide.md)
-
-## Recent Model Analysis and Debugging
-
-This section documents recent findings and debugging efforts related to the MiniZinc embedding models.
-
-### Analysis of v6 Model Unsatisfiability
-
-When running the `v6` main model with `v1` data parameters (`./scripts/run_embedding_model_v6.sh v6 v1 v1 v1 v1 v1`), the model consistently resulted in `=====UNSATISFIABLE=====`. This indicates that, with the given constraints and parameters, no solution could be found.
-
-The diagnostic process involved:
-*   **Initial Debugging of Script Execution:** Enhancing `run_embedding_model_v6.sh` to provide immediate `head`/`tail` log output and display the full MiniZinc command for easier debugging.
-*   **Resolving Include Path Issues:** Identifying and correcting an `include` path error in `embedding_sphere_final_v5.mzn` (which was temporarily modified during debugging) where `embedding_params_composed_v2.mzn` was being sought but the correct file was `embedding_params_core_composed_v3.mzn`. This was resolved by directly updating the `include` statement in `embedding_sphere_final_v5.mzn`.
-*   **Addressing Undefined Identifiers:** A chain of "undefined identifier" errors (`kappa_global`, `epsilon`, `num_bindings`, `alpha_coeff`) were encountered. These were resolved by ensuring that `embedding_sphere_final_v5.mzn` (and by extension, `embedding_sphere_final_v6.mzn` as they share similar structures) explicitly included the necessary parameter composition files (`embedding_params_kappa_composed.mzn`, `embedding_params_other_composed.mzn`, `embedding_params_relations_v3.mzn`, `embedding_params_vector_composed_v3.mzn`) before their corresponding `.dzn` data files were processed.
-*   **Pinpointing the Unsatisfiable Constraint:** The primary cause of the `=====UNSATISFIABLE===== `result for the `v6` model was identified as the unit norm constraint in `embedding_constraints.mzn`:
-    ```minizinc
-    constraint forall(i in 1..n) (
-      sum(k in 1..d) (p_actual_values[i,k] * p_actual_values[i,k]) = PARTITION_SCALE * PARTITION_SCALE
-    );
-    ```
-    This constraint, requiring the sum of squares of `p_actual_values` to exactly equal `PARTITION_SCALE * PARTITION_SCALE` (which is `1,000,000` with `PARTITION_SCALE = 1000`), proved too restrictive for the discrete integer values `p_actual_values` could take.
-*   **Achieving Satisfiability:** By temporarily commenting out this specific constraint in `embedding_constraints.mzn`, the `v6` model became satisfiable, demonstrating that this constraint was indeed the bottleneck.
-
-### Next Steps for Constraint Resolution
-
-To achieve a satisfiable solution while maintaining the intent of the unit norm constraint, several approaches can be explored:
-*   **Constraint Relaxation:** Modify the constraint to allow for a tolerance (e.g., `sum(...) <= PARTITION_SCALE * PARTITION_SCALE + tolerance`) or change the equality to an inequality (`<=` or `>=`).
-*   **Parameter Adjustment:** Re-evaluate the `PARTITION_SCALE` value or the domain of `p_actual_values` to find a combination that makes the constraint achievable with discrete values.
-*   **Alternative Modeling:** Explore alternative ways to model the unit norm concept within the discrete integer domain, potentially using different mathematical formulations or approximations.
-
-### Debugging Script Enhancements
-
-The `run_embedding_model_v6.sh` script has been enhanced to aid in debugging. It now:
-*   Prints the current working directory.
-*   Displays the full MiniZinc command being executed.
-*   Shows the first 20 lines (`head -n 20`) of both `stdout.log` and `stderr.log` immediately after the MiniZinc run, providing quick access to diagnostic information.
-
-## Tutorials
-
-### Episode 1: Introduction to Hyperspace and Lambda Embedding
-
-Dive into the foundational concepts of our hyperspace embedding project, exploring lambda calculus, MiniZinc, and how we're giving abstract programs a concrete home.
-
-*   [Read Episode 1: Introduction to Hyperspace and Lambda Embedding](docs/tutorial/episode1/001_intro.md)
+*   **[Core Concepts](docs/vision):** High-level vision, philosophy, and core concepts.
+*   **[Technical Documentation](docs/technical):** SOPs, RFCs, and other technical documents.
+*   **[Crate Documentation](docs/crates):** Documentation for individual crates.
+*   **[Poems and Creative Writing](docs/poems):** A collection of poems, sonnets, and other creative writing that captures the spirit of the project.
+*   **[Tutorials](docs/tutorial):** Step-by-step guides for getting started with the project.
 
 ## Development Guidelines
 
@@ -148,23 +104,27 @@ Adherence to these guidelines is crucial for contributing to this project:
 
 ### No Direct Edits
 
-Strictly adhere to the "add-only, never edit" philosophy. All changes are implemented by creating new, composable modules that supersede existing functionality. Refer to `docs/sops/no_direct_edits_sop.md` for detailed procedures.
+Strictly adhere to the "add-only, never edit" philosophy. All changes are implemented by creating new, composable modules that supersede existing functionality. Refer to `docs/technical/no_direct_edits_sop.md` for detailed procedures.
 
 ### Proof Tapes for Reproducibility
 
-Every model run automatically generates a "proof tape" in the `proof_tapes/` directory. This tape captures the exact version vector and all `.mzn` and `.dzn` files used, ensuring complete reproducibility of experimental results. See `docs/sops/run_model_sop_v3.md` for more.
+Every model run automatically generates a "proof tape" in the `proof_tapes/` directory. This tape captures the exact version vector and all `.mzn` and `.dzn` files used, ensuring complete reproducibility of experimental results. See `docs/technical/run_model_sop_v3.md` for more.
 
 ### Integer Discretization
 
-A key technical aspect of this project involves discretizing floating-point values into integers to enable solving with Constraint Programming (CP) solvers like Gecode. This requires careful scaling of all coefficients and constants and adaptation of mathematical operations. Refer to `docs/sops/project_workflow.md` for details.
+A key technical aspect of this project involves discretizing floating-point values into integers to enable solving with Constraint Programming (CP) solvers like Gecode. This requires careful scaling of all coefficients and constants and adaptation of mathematical operations. Refer to `docs/technical/project_workflow.md` for details.
 
 ### Gecode Integration
 
-Specific procedures are in place for building, configuring, and integrating Gecode as a solver. Troubleshooting steps for common build issues and solver discovery are documented. See `docs/sops/project_workflow.md`.
+Specific procedures are in place for building, configuring, and integrating Gecode as a solver. Troubleshooting steps for common build issues and solver discovery are documented. See `docs/technical/project_workflow.md`.
+
+### Performance Analysis and Optimization
+
+To systematically identify and address performance bottlenecks in MiniZinc models, particularly the `v6` embedding model, we follow a structured deconstruction and reconstruction process. This involves incremental reintroduction of complexity and rigorous performance measurement at each. For detailed procedures and recent findings, refer to `docs/technical/performance_analysis_report.md`.
 
 ## Contributing
 
-Contributions that align with the project's vision and adhere to its unique development philosophy are welcome. Please familiarize yourself with the SOPs in the `docs/sops/` directory before contributing.
+Contributions that align with the project's vision and adhere to its unique development philosophy are welcome. Please familiarize yourself with the documentation in the `docs/` directory before contributing.
 
 ## License
 
